@@ -10,7 +10,7 @@ async function main() {
 
   // Optional: node index.js --limit=30
   const limitArg = process.argv.find((arg) => arg.startsWith('--limit='));
-  const resultsPerCategory = limitArg ? parseInt(limitArg.split('=')[1], 10) : 20;
+  const resultsPerCategory = limitArg ? parseInt(limitArg.split('=')[1], 10) : 5;
 
   console.log(`Starting lead search — up to ${resultsPerCategory} businesses per category...`);
   await runLeadPipeline({ spreadsheetId, resultsPerCategory });
