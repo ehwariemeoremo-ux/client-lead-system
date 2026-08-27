@@ -9,9 +9,14 @@ const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GE
  * business that currently has no website.
  */
 async function draftWhatsappMessage({ businessName, category, hasWebsite = false }) {
+  const fallback = hasWebsite
+    ? `Hi! I visited ${businessName}'s website but couldn't find a direct email — I help businesses like yours build sites and automation (bookings, content calendars) that make it easier for customers to reach you. Open to a quick chat?`
+    : `Hi! I noticed ${businessName} doesn't have a website yet — I help businesses like yours get online and automate day-to-day tasks. Open to a quick chat?`;
+
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
-    throw new Error('GEMINI_API_KEY is missing from your environment/secrets.');
+    console.warn('  GEMINI_API_KEY missing — using a template WhatsApp message instead.');
+    return fallback;
   }
 
   const angle = hasWebsite
@@ -30,22 +35,28 @@ Rules:
 - No emojis, no hashtags, no generic filler like "I hope this message finds you well"
 - Output ONLY the message text, nothing else`;
 
-  const response = await fetch(`${GEMINI_URL}?key=${apiKey}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      contents: [{ parts: [{ text: prompt }] }],
-    }),
-  });
+  try {
+    const response = await fetch(`${GEMINI_URL}?key=${apiKey}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+      }),
+    });
 
-  if (!response.ok) {
-    const errorBody = await response.text();
-    throw new Error(`Gemini API error (${response.status}): ${errorBody}`);
+    if (!response.ok) {
+      const errorBody = await response.text();
+      console.warn(`  Gemini API error (${response.status}) for "${businessName}" — using a template message instead. ${errorBody.slice(0, 200)}`);
+      return fallback;
+    }
+
+    const data = await response.json();
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    return text ? text.trim() : fallback;
+  } catch (err) {
+    console.warn(`  Gemini call failed for "${businessName}" — using a template message instead. ${err.message}`);
+    return fallback;
   }
-
-  const data = await response.json();
-  const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-  return text ? text.trim() : `Hi! I noticed ${businessName} doesn't have a website yet — I help businesses like yours get online and automate day-to-day tasks. Open to a quick chat?`;
 }
 
 /**
@@ -53,9 +64,15 @@ Rules:
  * real contact email for.
  */
 async function draftEmailPitch({ businessName, category }) {
+  const fallback = {
+    subject: `Helping ${businessName} grow online`,
+    body: `Hi there,\n\nI noticed ${businessName} and wanted to reach out — I help businesses like yours with websites, sales funnels, and automation (like booking systems and content scheduling). Open to a quick chat?\n\nBest regards`,
+  };
+
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
-    throw new Error('GEMINI_API_KEY is missing from your environment/secrets.');
+    console.warn('  GEMINI_API_KEY missing — using a template email instead.');
+    return fallback;
   }
 
   const prompt = `Write a short, professional cold outreach email pitching web design and automation services to a Nigerian business owner.
@@ -73,31 +90,35 @@ Rules:
 Subject: <subject line here>
 Body: <email body here>`;
 
-  const response = await fetch(`${GEMINI_URL}?key=${apiKey}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      contents: [{ parts: [{ text: prompt }] }],
-    }),
-  });
+  try {
+    const response = await fetch(`${GEMINI_URL}?key=${apiKey}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+      }),
+    });
 
-  if (!response.ok) {
-    const errorBody = await response.text();
-    throw new Error(`Gemini API error (${response.status}): ${errorBody}`);
+    if (!response.ok) {
+      const errorBody = await response.text();
+      console.warn(`  Gemini API error (${response.status}) for "${businessName}" — using a template email instead. ${errorBody.slice(0, 200)}`);
+      return fallback;
+    }
+
+    const data = await response.json();
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+
+    const subjectMatch = text.match(/Subject:\s*(.+)/i);
+    const bodyMatch = text.match(/Body:\s*([\s\S]+)/i);
+
+    return {
+      subject: subjectMatch ? subjectMatch[1].trim() : fallback.subject,
+      body: bodyMatch ? bodyMatch[1].trim() : fallback.body,
+    };
+  } catch (err) {
+    console.warn(`  Gemini call failed for "${businessName}" — using a template email instead. ${err.message}`);
+    return fallback;
   }
-
-  const data = await response.json();
-  const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-
-  const subjectMatch = text.match(/Subject:\s*(.+)/i);
-  const bodyMatch = text.match(/Body:\s*([\s\S]+)/i);
-
-  return {
-    subject: subjectMatch ? subjectMatch[1].trim() : `Helping ${businessName} grow online`,
-    body: bodyMatch
-      ? bodyMatch[1].trim()
-      : `Hi there,\n\nI noticed ${businessName} and wanted to reach out — I help businesses like yours with websites and automation. Open to a quick chat?\n\nBest regards`,
-  };
 }
 
 module.exports = { draftWhatsappMessage, draftEmailPitch };
