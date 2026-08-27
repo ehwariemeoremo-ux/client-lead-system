@@ -7,9 +7,9 @@ on:
   workflow_dispatch:
     inputs:
       limit:
-        description: 'Leads per category to search for (default 20)'
+        description: 'Leads per category to search for (default 5 — each lead uses 1 free AI call, and the free tier has a daily cap)'
         required: false
-        default: '20'
+        default: '5'
 
 jobs:
   find-leads:
@@ -32,4 +32,4 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GOOGLE_PLACES_API_KEY: ${{ secrets.GOOGLE_PLACES_API_KEY }}
           GOOGLE_SERVICE_ACCOUNT_KEY_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY_JSON }}
-        run: node index.js --limit=${{ github.event.inputs.limit || '20' }}
+        run: node index.js --limit=${{ github.event.inputs.limit || '5' }}
