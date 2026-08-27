@@ -1,0 +1,35 @@
+name: Weekly Lead Search
+
+on:
+  schedule:
+    # Runs every Monday at 7:00 UTC. Change the cron value to adjust timing.
+    - cron: '0 7 * * 1'
+  workflow_dispatch:
+    inputs:
+      limit:
+        description: 'Leads per category to search for (default 20)'
+        required: false
+        default: '20'
+
+jobs:
+  find-leads:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run lead search
+        env:
+          LEADS_SHEET_ID: ${{ secrets.LEADS_SHEET_ID }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GOOGLE_PLACES_API_KEY: ${{ secrets.GOOGLE_PLACES_API_KEY }}
+          GOOGLE_SERVICE_ACCOUNT_KEY_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY_JSON }}
+        run: node index.js --limit=${{ github.event.inputs.limit || '20' }}
