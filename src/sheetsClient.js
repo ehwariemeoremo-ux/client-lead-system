@@ -60,26 +60,22 @@ async function ensureSheetStructure(spreadsheetId) {
     await sheets.spreadsheets.batchUpdate({ spreadsheetId, requestBody: { requests } });
   }
 
-  await writeHeadersIfMissing(spreadsheetId, LEADS_TAB, LEADS_HEADERS);
-  await writeHeadersIfMissing(spreadsheetId, USED_LEADS_TAB, USED_LEADS_HEADERS);
+  await writeHeaders(spreadsheetId, LEADS_TAB, LEADS_HEADERS);
+  await writeHeaders(spreadsheetId, USED_LEADS_TAB, USED_LEADS_HEADERS);
   await applyLeadsFormatting(spreadsheetId);
 }
 
-async function writeHeadersIfMissing(spreadsheetId, tabName, headers) {
+async function writeHeaders(spreadsheetId, tabName, headers) {
+  // Always overwrite row 1 with the current header set — this keeps the
+  // sheet in sync if the code adds/renames columns later. Harmless to run
+  // every time since it's just re-writing the same labels.
   const sheets = await getSheetsClient();
-  const res = await sheets.spreadsheets.values.get({
+  await sheets.spreadsheets.values.update({
     spreadsheetId,
-    range: `${tabName}!A1:Z1`,
+    range: `${tabName}!A1`,
+    valueInputOption: 'RAW',
+    requestBody: { values: [headers] },
   });
-  const hasHeaders = res.data.values && res.data.values.length > 0;
-  if (!hasHeaders) {
-    await sheets.spreadsheets.values.update({
-      spreadsheetId,
-      range: `${tabName}!A1`,
-      valueInputOption: 'RAW',
-      requestBody: { values: [headers] },
-    });
-  }
 }
 
 async function applyLeadsFormatting(spreadsheetId) {
@@ -87,7 +83,7 @@ async function applyLeadsFormatting(spreadsheetId) {
   const meta = await sheets.spreadsheets.get({ spreadsheetId });
   const leadsSheet = meta.data.sheets.find((s) => s.properties.title === LEADS_TAB);
   const sheetId = leadsSheet.properties.sheetId;
-  const existingBandedRanges = leadsSheet.bandedRanges || [];
+  const existingConditionalFormats = leadsSheet.conditionalFormats || [];
 
   const requests = [
     // Whole data area: white background, dark readable text, classic serif font
@@ -134,6 +130,15 @@ async function applyLeadsFormatting(spreadsheetId) {
       updateSheetProperties: {
         properties: { sheetId, gridProperties: { frozenRowCount: 1 } },
         fields: 'gridProperties.frozenRowCount',
+      },
+    },
+    // Make sure the Date column displays as a readable date, not a raw
+    // serial number like "46261"
+    {
+      repeatCell: {
+        range: { sheetId, startRowIndex: 1, startColumnIndex: 0, endColumnIndex: 1 },
+        cell: { userEnteredFormat: { numberFormat: { type: 'DATE', pattern: 'yyyy-mm-dd' } } },
+        fields: 'userEnteredFormat.numberFormat',
       },
     },
     // Thin borders on the whole data area, like a proper report table
@@ -213,19 +218,20 @@ async function applyLeadsFormatting(spreadsheetId) {
     { updateDimensionProperties: { range: { sheetId, dimension: 'COLUMNS', startIndex: 12, endIndex: 13 }, properties: { pixelSize: 130 }, fields: 'pixelSize' } },
   ];
 
-  // Only add zebra striping once — it self-extends to new rows automatically,
-  // so re-adding it on every run would just create duplicate banding rules.
-  if (existingBandedRanges.length === 0) {
+  // Only add zebra striping once — the formula-based rule automatically
+  // applies to new rows too, so re-adding it on every run would just
+  // create duplicate rules.
+  if (existingConditionalFormats.length === 0) {
     requests.push({
-      addBanding: {
-        bandedRange: {
-          range: { sheetId, startRowIndex: 0, endRowIndex: 1000, startColumnIndex: 0, endColumnIndex: 14 },
-          rowProperties: {
-            headerColor: { red: 0.09, green: 0.13, blue: 0.24 },
-            firstBandColor: { red: 1, green: 1, blue: 1 },
-            secondBandColor: { red: 0.95, green: 0.96, blue: 0.98 },
+      addConditionalFormatRule: {
+        rule: {
+          ranges: [{ sheetId, startRowIndex: 1, endRowIndex: 1000, startColumnIndex: 0, endColumnIndex: 14 }],
+          booleanRule: {
+            condition: { type: 'CUSTOM_FORMULA', values: [{ userEnteredValue: '=ISEVEN(ROW())' }] },
+            format: { backgroundColor: { red: 0.95, green: 0.96, blue: 0.98 } },
           },
         },
+        index: 0,
       },
     });
   }
