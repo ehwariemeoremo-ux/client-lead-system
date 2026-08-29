@@ -2,8 +2,9 @@ name: Daily Lead Search
 
 on:
   schedule:
-    # Runs every day at 7:00 UTC — matches your daily free AI quota reset.
-    - cron: '0 7 * * *'
+    # Runs every day at 14:00 UTC (about 3pm Nigeria time) — safely after
+    # your quota reset (~1pm), so it never runs on yesterday's leftover quota.
+    - cron: '0 14 * * *'
   workflow_dispatch:
     inputs:
       limit:
