@@ -22,6 +22,7 @@ const LEADS_HEADERS = [
   'Email Sent Date (auto-filled)',
   'Gmail Thread ID (auto-filled, do not edit)',
   'Status (fill in yourself: Contacted / Replied / Won / Not Interested)',
+  'Latest Reply Preview (auto-filled)',
 ];
 
 const USED_LEADS_HEADERS = ['Place ID', 'Business Name', 'Date Added'];
@@ -148,7 +149,7 @@ async function applyLeadsFormatting(spreadsheetId) {
     // Thin borders on the whole data area, like a proper report table
     {
       updateBorders: {
-        range: { sheetId, startRowIndex: 0, endRowIndex: 1000, startColumnIndex: 0, endColumnIndex: 18 },
+        range: { sheetId, startRowIndex: 0, endRowIndex: 1000, startColumnIndex: 0, endColumnIndex: 19 },
         top: { style: 'SOLID', width: 1, color: { red: 0.85, green: 0.85, blue: 0.85 } },
         bottom: { style: 'SOLID', width: 1, color: { red: 0.85, green: 0.85, blue: 0.85 } },
         left: { style: 'SOLID', width: 1, color: { red: 0.85, green: 0.85, blue: 0.85 } },
@@ -182,6 +183,13 @@ async function applyLeadsFormatting(spreadsheetId) {
     {
       repeatCell: {
         range: { sheetId, startRowIndex: 1, startColumnIndex: 12, endColumnIndex: 13 },
+        cell: { userEnteredFormat: { wrapStrategy: 'WRAP', verticalAlignment: 'TOP' } },
+        fields: 'userEnteredFormat(wrapStrategy,verticalAlignment)',
+      },
+    },
+    {
+      repeatCell: {
+        range: { sheetId, startRowIndex: 1, startColumnIndex: 18, endColumnIndex: 19 },
         cell: { userEnteredFormat: { wrapStrategy: 'WRAP', verticalAlignment: 'TOP' } },
         fields: 'userEnteredFormat(wrapStrategy,verticalAlignment)',
       },
@@ -230,6 +238,7 @@ async function applyLeadsFormatting(spreadsheetId) {
     { updateDimensionProperties: { range: { sheetId, dimension: 'COLUMNS', startIndex: 14, endIndex: 15 }, properties: { pixelSize: 160 }, fields: 'pixelSize' } },
     { updateDimensionProperties: { range: { sheetId, dimension: 'COLUMNS', startIndex: 15, endIndex: 16 }, properties: { pixelSize: 150 }, fields: 'pixelSize' } },
     { updateDimensionProperties: { range: { sheetId, dimension: 'COLUMNS', startIndex: 16, endIndex: 17 }, properties: { pixelSize: 130, hiddenByUser: true }, fields: 'pixelSize,hiddenByUser' } },
+    { updateDimensionProperties: { range: { sheetId, dimension: 'COLUMNS', startIndex: 18, endIndex: 19 }, properties: { pixelSize: 280 }, fields: 'pixelSize' } },
   ];
 
   // Only add zebra striping once — the formula-based rule automatically
@@ -239,7 +248,7 @@ async function applyLeadsFormatting(spreadsheetId) {
     requests.push({
       addConditionalFormatRule: {
         rule: {
-          ranges: [{ sheetId, startRowIndex: 1, endRowIndex: 1000, startColumnIndex: 0, endColumnIndex: 18 }],
+          ranges: [{ sheetId, startRowIndex: 1, endRowIndex: 1000, startColumnIndex: 0, endColumnIndex: 19 }],
           booleanRule: {
             condition: { type: 'CUSTOM_FORMULA', values: [{ userEnteredValue: '=ISEVEN(ROW())' }] },
             format: { backgroundColor: { red: 0.95, green: 0.96, blue: 0.98 } },
