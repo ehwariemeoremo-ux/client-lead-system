@@ -30,6 +30,7 @@ var COLUMNS = {
   EMAIL_SENT_DATE: 15,
   GMAIL_THREAD_ID: 16,
   STATUS: 17,
+  LATEST_REPLY_PREVIEW: 18,
 };
 
 // Change this number to send more/fewer emails per day.
@@ -119,6 +120,15 @@ function checkForReplies() {
         var thread = GmailApp.getThreadById(threadId);
         if (thread && thread.getMessageCount() > 1) {
           sheet.getRange(i + 1, COLUMNS.STATUS + 1).setValue('Replied');
+
+          // Pull the most recent message in the thread (the client's reply)
+          // and drop a short preview of it directly into the Sheet, so you
+          // can glance at it without opening Gmail.
+          var messages = thread.getMessages();
+          var latestMessage = messages[messages.length - 1];
+          var replyText = latestMessage.getPlainBody().trim();
+          var preview = replyText.length > 300 ? replyText.substring(0, 300) + '...' : replyText;
+          sheet.getRange(i + 1, COLUMNS.LATEST_REPLY_PREVIEW + 1).setValue(preview);
         }
       } catch (err) {
         // Thread may have been deleted/moved on Gmail's side — skip quietly
