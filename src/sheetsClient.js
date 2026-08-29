@@ -143,7 +143,7 @@ async function applyLeadsFormatting(spreadsheetId) {
       repeatCell: {
         range: { sheetId, startRowIndex: 1, startColumnIndex: 0, endColumnIndex: 1 },
         cell: { userEnteredFormat: { numberFormat: { type: 'DATE', pattern: 'yyyy-mm-dd' } } },
-        fields: 'userEnteredFormat.numberFormat',
+        fields: 'userEnteredFormat(numberFormat)',
       },
     },
     // Thin borders on the whole data area, like a proper report table
@@ -268,7 +268,7 @@ async function appendLeadRow(spreadsheetId, rowValues) {
     spreadsheetId,
     range: `${LEADS_TAB}!A1`,
     valueInputOption: 'USER_ENTERED',
-    insertDataOption: 'INSERT_ROWS',
+    insertDataOption: 'OVERWRITE',
     requestBody: { values: [rowValues] },
   });
 }
@@ -279,7 +279,7 @@ async function recordUsedLead(spreadsheetId, placeId, businessName, dateStr) {
     spreadsheetId,
     range: `${USED_LEADS_TAB}!A1`,
     valueInputOption: 'USER_ENTERED',
-    insertDataOption: 'INSERT_ROWS',
+    insertDataOption: 'OVERWRITE',
     requestBody: { values: [[placeId, businessName, dateStr]] },
   });
 }
