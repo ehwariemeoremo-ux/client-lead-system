@@ -137,6 +137,7 @@ async function runLeadPipeline({ spreadsheetId, resultsPerCategory = 20 }) {
         '', // Email Sent Date - filled automatically once sent
         '', // Gmail Thread ID - filled automatically once sent
         '', // Status - left blank for the user to fill in
+        '', // Latest Reply Preview - filled automatically once they reply
       ]);
 
       await recordUsedLead(spreadsheetId, business.placeId, business.name, todayStr());
