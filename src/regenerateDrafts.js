@@ -19,7 +19,7 @@ async function regenerateAllDrafts(spreadsheetId) {
   const sheets = await getSheetsClientForRegenerate();
   const res = await sheets.spreadsheets.values.get({
     spreadsheetId,
-    range: `${LEADS_TAB}!A2:S`,
+    range: `${LEADS_TAB}!A2:V`,
   });
   const rows = res.data.values || [];
 
@@ -50,6 +50,7 @@ async function regenerateAllDrafts(spreadsheetId) {
     let emailSubject = '';
     let emailBody = '';
     let emailLinkCell = '';
+    let messageSource = '';
 
     try {
       if (contactMethod === 'Email' && emailFound) {
@@ -61,6 +62,7 @@ async function regenerateAllDrafts(spreadsheetId) {
         });
         emailSubject = pitch.subject;
         emailBody = pitch.body;
+        messageSource = pitch.source;
         const emailLink = buildMailtoLink(emailFound, emailSubject, emailBody);
         emailLinkCell = `=HYPERLINK("${emailLink}","Open Email Draft")`;
       } else if (contactMethod.indexOf('WhatsApp') === 0) {
@@ -68,13 +70,15 @@ async function regenerateAllDrafts(spreadsheetId) {
         const phone = phoneRaw.replace(/^'/, ''); // strip the text-forcing apostrophe if present
         const hasWebsite = contactMethod.indexOf('website has no listed email') !== -1;
 
-        whatsappDraft = await draftWhatsappMessage({
+        const draft = await draftWhatsappMessage({
           businessName,
           category: categoryName,
           hasWebsite,
           pitchAngle,
           websiteQuality,
         });
+        whatsappDraft = draft.message;
+        messageSource = draft.source;
         const whatsappLink = buildWhatsappLink(phone, whatsappDraft);
         whatsappLinkCell = `=HYPERLINK("${whatsappLink}","Open WhatsApp Chat")`;
       } else {
@@ -82,9 +86,9 @@ async function regenerateAllDrafts(spreadsheetId) {
         continue; // no website/phone lead — nothing to regenerate
       }
 
-      // Overwrite just the 5 message-related columns (J through N), leaving
-      // Approved to Send / Email Sent Date / Thread ID / Status / Latest
-      // Reply Preview completely untouched.
+      // Overwrite the 5 message-related columns (J through N), leaving
+      // Approved to Send / Email Sent Date / Follow-Up tracking / Thread ID /
+      // Status / Latest Reply Preview completely untouched.
       await sheets.spreadsheets.values.update({
         spreadsheetId,
         range: `${LEADS_TAB}!J${rowNumber}:N${rowNumber}`,
@@ -94,8 +98,16 @@ async function regenerateAllDrafts(spreadsheetId) {
         },
       });
 
+      // Also update the Message Source column (V) to reflect this fresh draft
+      await sheets.spreadsheets.values.update({
+        spreadsheetId,
+        range: `${LEADS_TAB}!V${rowNumber}`,
+        valueInputOption: 'USER_ENTERED',
+        requestBody: { values: [[messageSource]] },
+      });
+
       updated += 1;
-      console.log(`  Regenerated: ${businessName}`);
+      console.log(`  Regenerated: ${businessName} (${messageSource})`);
 
       // Small pause between AI calls, matching the pacing used elsewhere
       await new Promise((resolve) => setTimeout(resolve, 1000));
