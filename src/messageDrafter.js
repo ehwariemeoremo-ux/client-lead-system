@@ -2,7 +2,7 @@
 // or email pitch, tailored to what the lead actually needs — not a generic
 // "get online" message for everyone.
 
-const GEMINI_MODEL = 'gemini-2.0-flash';
+const GEMINI_MODEL = 'gemini-3.6-flash';
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
 
 /**
@@ -10,7 +10,42 @@ const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GE
  * pitchAngle and whether the business already has a website. Keeping this
  * separate from the main prompt makes it easy to add new angles later.
  */
-function buildPitchAngle(pitchAngle, hasWebsite, websiteQuality) {
+function buildFallbackWhatsappMessage(businessName, hasWebsite, websiteQuality) {
+  if (!hasWebsite) {
+    return `Hi! I noticed ${businessName} doesn't have a website yet — I build websites and automation (like booking systems and content scheduling) for businesses like yours. Open to a quick chat?`;
+  }
+
+  if (websiteQuality === 'Broken Website') {
+    return `Hi! I tried visiting ${businessName}'s website and it looks like it's down or not loading right now — that could be turning away customers before they even find you. I fix and rebuild sites like this, and also build automation (booking systems, content scheduling) for businesses like yours. Open to a quick chat?`;
+  }
+
+  if (websiteQuality === 'Outdated Website') {
+    return `Hi! I checked out ${businessName}'s website and noticed it hasn't been updated in a while (it's missing mobile-friendly design, or showing an old date) — a modern refresh could help you convert more visitors into customers. I build sites and automation for businesses like yours. Open to a quick chat?`;
+  }
+
+  return `Hi! I checked out ${businessName}'s website but couldn't find a direct email listed — I build custom systems for businesses like yours, like WhatsApp assistants that handle customer questions automatically or inventory tools that alert you on low stock. I've already built and run similar automation (a content calendar system, for example). Open to a quick chat?`;
+}
+
+function buildFallbackEmailPitch(businessName, websiteQuality) {
+  if (websiteQuality === 'Broken Website') {
+    return {
+      subject: `${businessName}'s website appears to be down`,
+      body: `Hi there,\n\nI tried visiting ${businessName}'s website and it looks like it's not loading right now — that's likely costing you customers who give up before finding you. I fix and rebuild websites, and also build automation systems (like inventory alerts and content scheduling) for businesses like yours. Open to a quick chat about getting it back up and running properly?\n\nBest regards`,
+    };
+  }
+
+  if (websiteQuality === 'Outdated Website') {
+    return {
+      subject: `A quick note on ${businessName}'s website`,
+      body: `Hi there,\n\nI checked out ${businessName}'s website and noticed it looks like it hasn't been updated in a while (missing mobile-friendly design, or an old date shown on the page). A modern refresh could help turn more visitors into customers. I build websites and automation systems for businesses like yours. Open to a quick chat about what a refresh could look like?\n\nBest regards`,
+    };
+  }
+
+  return {
+    subject: `A system built for businesses like ${businessName}`,
+    body: `Hi there,\n\nI noticed ${businessName} and wanted to reach out — I build custom websites and automation systems (like AI-driven customer response tools, inventory alerts, and content scheduling) for businesses like yours. I've already built and run similar systems, including a fully automated content calendar tool. Open to a quick chat about what might help your business?\n\nBest regards`,
+  };
+}
   if (pitchAngle === 'contentAutomation') {
     return `This lead is a marketing/social media agency — they already manage content for clients, so don't pitch "getting online." Instead, mention you've personally built a working automated content calendar system that researches ideas, rotates them across content pillars, and auto-populates a full month of Instagram/Facebook/TikTok posts on a schedule — genuinely running today, not a concept. Offer to show them how it works or build a version for their team/clients.`;
   }
@@ -33,14 +68,12 @@ function buildPitchAngle(pitchAngle, hasWebsite, websiteQuality) {
  * Drafts a short WhatsApp message, tailored via pitchAngle + hasWebsite.
  */
 async function draftWhatsappMessage({ businessName, category, hasWebsite = false, pitchAngle = 'general', websiteQuality = 'No Website' }) {
-  const fallback = hasWebsite
-    ? `Hi! I noticed ${businessName}'s website but couldn't find a direct email — I build custom systems for businesses like yours, like WhatsApp assistants that handle customer questions automatically or inventory tools that alert you on low stock. I've already built and run similar automation (a content calendar system, for example). Open to a quick chat?`
-    : `Hi! I noticed ${businessName} doesn't have a website yet — I build websites and automation (like booking systems and content scheduling) for businesses like yours. Open to a quick chat?`;
+  const fallback = buildFallbackWhatsappMessage(businessName, hasWebsite, websiteQuality);
 
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
     console.warn('  GEMINI_API_KEY missing — using a template WhatsApp message instead.');
-    return fallback;
+    return { message: fallback, source: 'Template' };
   }
 
   const angle = buildPitchAngle(pitchAngle, hasWebsite, websiteQuality);
@@ -69,15 +102,15 @@ Rules:
     if (!response.ok) {
       const errorBody = await response.text();
       console.warn(`  Gemini API error (${response.status}) for "${businessName}" — using a template message instead. ${errorBody.slice(0, 200)}`);
-      return fallback;
+      return { message: fallback, source: 'Template' };
     }
 
     const data = await response.json();
     const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-    return text ? text.trim() : fallback;
+    return text ? { message: text.trim(), source: 'AI' } : { message: fallback, source: 'Template' };
   } catch (err) {
     console.warn(`  Gemini call failed for "${businessName}" — using a template message instead. ${err.message}`);
-    return fallback;
+    return { message: fallback, source: 'Template' };
   }
 }
 
@@ -85,15 +118,12 @@ Rules:
  * Drafts a short email pitch (subject + body), tailored via pitchAngle + hasWebsite.
  */
 async function draftEmailPitch({ businessName, category, pitchAngle = 'general', websiteQuality = 'Decent Website' }) {
-  const fallback = {
-    subject: `A system built for businesses like ${businessName}`,
-    body: `Hi there,\n\nI noticed ${businessName} and wanted to reach out — I build custom websites and automation systems (like AI-driven customer response tools, inventory alerts, and content scheduling) for businesses like yours. I've already built and run similar systems, including a fully automated content calendar tool. Open to a quick chat about what might help your business?\n\nBest regards`,
-  };
+  const fallback = buildFallbackEmailPitch(businessName, websiteQuality);
 
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
     console.warn('  GEMINI_API_KEY missing — using a template email instead.');
-    return fallback;
+    return { ...fallback, source: 'Template' };
   }
 
   const angle = buildPitchAngle(pitchAngle, true, websiteQuality); // email leads always have a website (that's how we found their email)
@@ -125,7 +155,7 @@ Body: <email body here>`;
     if (!response.ok) {
       const errorBody = await response.text();
       console.warn(`  Gemini API error (${response.status}) for "${businessName}" — using a template email instead. ${errorBody.slice(0, 200)}`);
-      return fallback;
+      return { ...fallback, source: 'Template' };
     }
 
     const data = await response.json();
@@ -134,13 +164,18 @@ Body: <email body here>`;
     const subjectMatch = text.match(/Subject:\s*(.+)/i);
     const bodyMatch = text.match(/Body:\s*([\s\S]+)/i);
 
+    if (!subjectMatch || !bodyMatch) {
+      return { ...fallback, source: 'Template' };
+    }
+
     return {
-      subject: subjectMatch ? subjectMatch[1].trim() : fallback.subject,
-      body: bodyMatch ? bodyMatch[1].trim() : fallback.body,
+      subject: subjectMatch[1].trim(),
+      body: bodyMatch[1].trim(),
+      source: 'AI',
     };
   } catch (err) {
     console.warn(`  Gemini call failed for "${businessName}" — using a template email instead. ${err.message}`);
-    return fallback;
+    return { ...fallback, source: 'Template' };
   }
 }
 
