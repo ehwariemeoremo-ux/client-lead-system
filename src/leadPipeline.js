@@ -53,6 +53,7 @@ async function runLeadPipeline({ spreadsheetId, resultsPerCategory = 20 }) {
       let emailLink = '';
       let contactMethod = 'Unknown';
       let websiteQuality = 'No Website';
+      let messageSource = '';
 
       try {
         if (business.website) {
@@ -69,28 +70,33 @@ async function runLeadPipeline({ spreadsheetId, resultsPerCategory = 20 }) {
             emailSubject = pitch.subject;
             emailBody = pitch.body;
             emailLink = buildMailtoLink(email, emailSubject, emailBody);
+            messageSource = pitch.source;
           } else if (business.phone) {
             // Has a website, but no findable email — fall back to WhatsApp
-            whatsappDraft = await draftWhatsappMessage({
+            const draft = await draftWhatsappMessage({
               businessName: business.name,
               category: category.name,
               hasWebsite: true,
               pitchAngle: category.pitchAngle,
               websiteQuality,
             });
+            whatsappDraft = draft.message;
+            messageSource = draft.source;
             whatsappLink = buildWhatsappLink(business.phone, whatsappDraft);
             contactMethod = 'WhatsApp (website has no listed email)';
           } else {
             contactMethod = 'Website found, but no email or phone';
           }
         } else if (business.phone) {
-          whatsappDraft = await draftWhatsappMessage({
+          const draft = await draftWhatsappMessage({
             businessName: business.name,
             category: category.name,
             hasWebsite: false,
             pitchAngle: category.pitchAngle,
             websiteQuality: 'No Website',
           });
+          whatsappDraft = draft.message;
+          messageSource = draft.source;
           whatsappLink = buildWhatsappLink(business.phone, whatsappDraft);
           contactMethod = 'WhatsApp (no website)';
         } else {
@@ -140,6 +146,7 @@ async function runLeadPipeline({ spreadsheetId, resultsPerCategory = 20 }) {
         '', // Gmail Thread ID - filled automatically once sent
         '', // Status - left blank for the user to fill in
         '', // Latest Reply Preview - filled automatically once they reply
+        messageSource, // "AI" or "Template" - tells you which kind of message this is
       ]);
 
       await recordUsedLead(spreadsheetId, business.placeId, business.name, todayStr());
