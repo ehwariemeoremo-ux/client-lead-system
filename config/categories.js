@@ -1,5 +1,6 @@
 // Each category has:
-// - searchTerm: exactly what gets sent to Google as a search phrase
+// - searchTemplate: a function that builds the actual search phrase for a
+//   given city, e.g. "gym or fitness center in Lagos, Nigeria"
 // - pitchAngle: which message-drafting style to use (see messageDrafter.js)
 //   'general' = website/automation pitch for local businesses (gyms, salons, etc.)
 //   'contentAutomation' = pitch specifically for the content calendar system,
@@ -8,28 +9,29 @@
 module.exports = [
   {
     name: 'Gyms/Fitness',
-    searchTerm: 'gym or fitness center in Nigeria',
+    searchTemplate: (city) => `gym or fitness center in ${city}`,
     pitchAngle: 'general',
   },
   {
     name: 'Boutiques/Retail',
-    searchTerm: 'boutique or clothing store in Nigeria',
+    searchTemplate: (city) => `boutique or clothing store in ${city}`,
     pitchAngle: 'general',
   },
   {
     name: 'Restaurants/Food',
-    searchTerm: 'restaurant in Nigeria',
+    searchTemplate: (city) => `restaurant in ${city}`,
     pitchAngle: 'general',
   },
   {
     name: 'Salons/Beauty',
-    searchTerm: 'hair salon or beauty spa in Nigeria',
+    searchTemplate: (city) => `hair salon or beauty spa in ${city}`,
     pitchAngle: 'general',
   },
   {
     name: 'Marketing/Content Agencies',
-    searchTerm: 'social media marketing agency or digital marketing agency in Nigeria',
+    searchTemplate: (city) => `social media marketing agency or digital marketing agency in ${city}`,
     pitchAngle: 'contentAutomation',
   },
 ];
+
 
