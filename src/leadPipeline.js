@@ -11,8 +11,21 @@ const {
   getAllUsedPlaceIds,
 } = require('./sheetsClient');
 const categories = require('../config/categories');
+const cities = require('../config/cities');
 
 const todayStr = () => new Date().toISOString().split('T')[0];
+
+/**
+ * Picks a city for today by rotating through the list based on the day of
+ * the year — this means the search naturally cycles through every city
+ * over time instead of always searching the same one.
+ */
+function getCityForToday() {
+  const now = new Date();
+  const startOfYear = new Date(now.getFullYear(), 0, 0);
+  const dayOfYear = Math.floor((now - startOfYear) / (1000 * 60 * 60 * 24));
+  return cities[dayOfYear % cities.length];
+}
 
 /**
  * Runs the full pipeline: search each category, skip already-seen
@@ -22,15 +35,18 @@ const todayStr = () => new Date().toISOString().split('T')[0];
 async function runLeadPipeline({ spreadsheetId, resultsPerCategory = 20 }) {
   await ensureSheetStructure(spreadsheetId);
   const usedPlaceIds = await getAllUsedPlaceIds(spreadsheetId);
+  const city = getCityForToday();
+  console.log(`Today's search city: ${city}`);
 
   const summary = { found: 0, skippedDuplicates: 0, errors: [] };
 
   for (const category of categories) {
-    console.log(`\n--- Searching category: ${category.name} ---`);
+    const searchTerm = category.searchTemplate(city);
+    console.log(`\n--- Searching category: ${category.name} (${city}) ---`);
 
     let businesses = [];
     try {
-      businesses = await searchBusinesses(category.searchTerm, resultsPerCategory);
+      businesses = await searchBusinesses(searchTerm, resultsPerCategory);
     } catch (err) {
       console.error(`  Failed to search "${category.name}": ${err.message}`);
       summary.errors.push(`${category.name}: ${err.message}`);
