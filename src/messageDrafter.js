@@ -79,7 +79,7 @@ async function draftWhatsappMessage({ businessName, category, hasWebsite = false
 
   const angle = buildPitchAngle(pitchAngle, hasWebsite, websiteQuality);
 
-  const prompt = `Write a short, friendly, professional WhatsApp message (under 65 words) pitching custom software/automation services to a Nigerian business owner.
+  const prompt = `Write a short, friendly, professional WhatsApp message (under 65 words) pitching custom software/automation services to a small business owner.
 
 Business name: ${businessName}
 Business type: ${category}
@@ -129,7 +129,7 @@ async function draftEmailPitch({ businessName, category, pitchAngle = 'general',
 
   const angle = buildPitchAngle(pitchAngle, true, websiteQuality); // email leads always have a website (that's how we found their email)
 
-  const prompt = `Write a short, professional cold outreach email pitching custom software/automation services to a Nigerian business owner.
+  const prompt = `Write a short, professional cold outreach email pitching custom software/automation services to a small business owner.
 
 Business name: ${businessName}
 Business type: ${category}
