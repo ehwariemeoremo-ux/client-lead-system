@@ -163,6 +163,7 @@ async function runLeadPipeline({ spreadsheetId, resultsPerCategory = 20 }) {
         '', // Status - left blank for the user to fill in
         '', // Latest Reply Preview - filled automatically once they reply
         messageSource, // "AI" or "Template" - tells you which kind of message this is
+        '', // Email Opened - filled automatically by the tracking pixel once they open it
       ]);
 
       await recordUsedLead(spreadsheetId, business.placeId, business.name, todayStr());
