@@ -12,25 +12,25 @@ const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GE
  */
 function buildFallbackWhatsappMessage(businessName, hasWebsite, websiteQuality) {
   if (!hasWebsite) {
-    return `Hi! I noticed ${businessName} doesn't have a website yet — I build websites and automation (like booking systems and content scheduling) for businesses like yours. Open to a quick chat?`;
+    return `Hi! I noticed ${businessName} doesn't have a website yet. I build websites and automation (like booking systems and content scheduling) for businesses like yours. Open to a quick chat?`;
   }
 
   if (websiteQuality === 'Broken Website') {
-    return `Hi! I tried visiting ${businessName}'s website and it looks like it's down or not loading right now — that could be turning away customers before they even find you. I fix and rebuild sites like this, and also build automation (booking systems, content scheduling) for businesses like yours. Open to a quick chat?`;
+    return `Hi! I tried visiting ${businessName}'s website and it looks like it's down or not loading right now. That could be turning away customers before they even find you. I fix and rebuild sites like this, and also build automation (booking systems, content scheduling) for businesses like yours. Open to a quick chat?`;
   }
 
   if (websiteQuality === 'Outdated Website') {
-    return `Hi! I checked out ${businessName}'s website and noticed it hasn't been updated in a while (it's missing mobile-friendly design, or showing an old date) — a modern refresh could help you convert more visitors into customers. I build sites and automation for businesses like yours. Open to a quick chat?`;
+    return `Hi! I checked out ${businessName}'s website and noticed it hasn't been updated in a while (it's missing mobile-friendly design, or showing an old date). A modern refresh could help you convert more visitors into customers. I build sites and automation for businesses like yours. Open to a quick chat?`;
   }
 
-  return `Hi! I checked out ${businessName}'s website but couldn't find a direct email listed — I build custom systems for businesses like yours, like WhatsApp assistants that handle customer questions automatically or inventory tools that alert you on low stock. I've already built and run similar automation (a content calendar system, for example). Open to a quick chat?`;
+  return `Hi! I checked out ${businessName}'s website but couldn't find a direct email listed. I build custom systems for businesses like yours, like WhatsApp assistants that handle customer questions automatically or inventory tools that alert you on low stock. I've already built and deployed AI WhatsApp assistants for other businesses, handling customer questions, orders, and stock checks automatically. Open to a quick chat?`;
 }
 
 function buildFallbackEmailPitch(businessName, websiteQuality) {
   if (websiteQuality === 'Broken Website') {
     return {
       subject: `${businessName}'s website appears to be down`,
-      body: `Hi there,\n\nI tried visiting ${businessName}'s website and it looks like it's not loading right now — that's likely costing you customers who give up before finding you. I fix and rebuild websites, and also build automation systems (like inventory alerts and content scheduling) for businesses like yours. Open to a quick chat about getting it back up and running properly?\n\nBest regards`,
+      body: `Hi there,\n\nI tried visiting ${businessName}'s website and it looks like it's not loading right now. That's likely costing you customers who give up before finding you. I fix and rebuild websites, and also build automation systems (like inventory alerts and content scheduling) for businesses like yours. Open to a quick chat about getting it back up and running properly?\n\nBest regards`,
     };
   }
 
@@ -43,7 +43,7 @@ function buildFallbackEmailPitch(businessName, websiteQuality) {
 
   return {
     subject: `A system built for businesses like ${businessName}`,
-    body: `Hi there,\n\nI noticed ${businessName} and wanted to reach out — I build custom websites and automation systems (like AI-driven customer response tools, inventory alerts, and content scheduling) for businesses like yours. I've already built and run similar systems, including a fully automated content calendar tool. Open to a quick chat about what might help your business?\n\nBest regards`,
+    body: `Hi there,\n\nI noticed ${businessName} and wanted to reach out. I build custom websites and automation systems (like AI-driven WhatsApp assistants, inventory alerts, and customer response tools) for businesses like yours. I've already built and deployed AI WhatsApp assistants for other businesses, handling customer questions, orders, and stock checks automatically. Open to a quick chat about what might help your business?\n\nBest regards`,
   };
 }
 function buildPitchAngle(pitchAngle, hasWebsite, websiteQuality) {
@@ -59,7 +59,7 @@ function buildPitchAngle(pitchAngle, hasWebsite, websiteQuality) {
   }
 
   if (hasWebsite) {
-    return `This business already has a decent, working website, so don't pitch "getting online" or a website refresh — that would be redundant. Instead, pitch a specific custom system you build for businesses like theirs: either an AI-powered WhatsApp assistant that responds to customer questions and takes orders even when the owner is unavailable, or an inventory tracking system that alerts them when stock runs low and automatically follows up with customers about new arrivals. Pick whichever fits the business type better. Briefly note you've already built real automation systems (like a content calendar tool that runs itself) as proof you deliver, without overclaiming these specific new systems are pre-built products — frame them as custom work you build for clients.`;
+    return `This business already has a decent, working website, so don't pitch "getting online" or a website refresh — that would be redundant. Instead, pitch a specific custom system you build for businesses like theirs: either an AI-powered WhatsApp assistant that responds to customer questions and takes orders even when the owner is unavailable, or an inventory tracking system that alerts them when stock runs low and automatically follows up with customers about new arrivals. Pick whichever fits the business type better. Briefly note you've already built and deployed real AI WhatsApp assistants for other businesses (handling customer questions, live inventory-aware responses, and even automatic payment collection) as proof you deliver — this is a directly relevant example, not a loosely-related one. Frame it as custom work you build for clients, without overclaiming that this exact new system is a pre-built product.`;
   }
 
   return `This business has no website yet. Mention that, and offer to build them a proper website or sales funnel plus automation (like a booking system or content scheduling) — the kind of practical foundation that helps them look credible and save time day-to-day.`;
