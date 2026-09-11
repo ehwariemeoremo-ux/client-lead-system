@@ -26,6 +26,7 @@ const LEADS_HEADERS = [
   'Status (fill in yourself: Contacted / Replied / Won / Not Interested)',
   'Latest Reply Preview (auto-filled)',
   'Message Source (AI or Template)',
+  'Email Opened (auto-filled)',
 ];
 
 const USED_LEADS_HEADERS = ['Place ID', 'Business Name', 'Date Added'];
@@ -152,7 +153,7 @@ async function applyLeadsFormatting(spreadsheetId) {
     // Thin borders on the whole data area, like a proper report table
     {
       updateBorders: {
-        range: { sheetId, startRowIndex: 0, endRowIndex: 1000, startColumnIndex: 0, endColumnIndex: 22 },
+        range: { sheetId, startRowIndex: 0, endRowIndex: 1000, startColumnIndex: 0, endColumnIndex: 23 },
         top: { style: 'SOLID', width: 1, color: { red: 0.85, green: 0.85, blue: 0.85 } },
         bottom: { style: 'SOLID', width: 1, color: { red: 0.85, green: 0.85, blue: 0.85 } },
         left: { style: 'SOLID', width: 1, color: { red: 0.85, green: 0.85, blue: 0.85 } },
@@ -254,7 +255,7 @@ async function applyLeadsFormatting(spreadsheetId) {
     requests.push({
       addConditionalFormatRule: {
         rule: {
-          ranges: [{ sheetId, startRowIndex: 1, endRowIndex: 1000, startColumnIndex: 0, endColumnIndex: 22 }],
+          ranges: [{ sheetId, startRowIndex: 1, endRowIndex: 1000, startColumnIndex: 0, endColumnIndex: 23 }],
           booleanRule: {
             condition: { type: 'CUSTOM_FORMULA', values: [{ userEnteredValue: '=ISEVEN(ROW())' }] },
             format: { backgroundColor: { red: 0.95, green: 0.96, blue: 0.98 } },
